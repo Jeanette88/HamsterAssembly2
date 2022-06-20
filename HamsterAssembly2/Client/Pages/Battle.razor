@@ -1,0 +1,131 @@
+﻿@page "/battle"
+@page "/battle/{id:int}"
+@using HamsterAssembly2.Client.Services
+@using HamsterAssembly2.Client.Services.BattleService
+@using HamsterAssembly2.Client.Services.HamsterService
+@using HamsterAssembly2.Shared.Models
+@inject IHamsterService _hamster
+@inject IBattleService _battle
+@inject NavigationManager _nav
+
+<PageTitle>Battle</PageTitle>
+
+@if (battleDone)
+{
+    <h3>This is the Results. </h3>
+}
+else
+{
+    <h3>Battle: Choose which hamster is the cutest. </h3>
+}
+
+@if (battleDone)
+{
+    @foreach (var hamster in _battle.Fighters)
+    {
+        <div class="text-center">
+            <div class="box">
+
+                <img src="@hamster.ImgName" alt="@hamster.HamsterId" class="ImagePhoto">
+
+                <p>@hamster.HamsterName</p>
+                <p>Games: @hamster.Games</p>
+                <p>Wins: @hamster.Wins</p>
+                <p>Losses: @hamster.Losses</p>
+
+                <button type="button" class="btn btn-primary" onfocus="location.reload()">Next battle</button>
+            </div>
+        </div>
+    }
+}
+else
+{
+    @foreach (var hamster in _hamster.Hamsters)
+    {
+        <div class="text-center">
+            <div class="box">
+
+                <img src="@hamster.ImgName" alt="@hamster.Id" class="ImagePhoto">
+                @*<img src="@hamster.ImgName" alt="@hamster.Name" @onclick="(() => UpdatePoints(hamster.Id))">*@
+
+                <button type="button" @onclick="(() => UpdatePoints(hamster.Id))" class="btn btn-primary">Like</button>
+                <p>Name: @hamster.Name</p>
+                <p>Age: @hamster.Age</p>
+                <p>Favourite food: @hamster.FavFood</p>
+                <p>Favourite thing: @hamster.Loves</p>
+            </div>
+
+        </div>
+    }
+}
+
+
+
+
+
+
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    string headLine = string.Empty;
+
+    private bool battleDone = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (Id != null)
+        {
+            headLine = "Next battle";
+            await _battle.GetGame((int)Id);
+        }
+        else
+        {
+            headLine = "Battle";
+        }
+        int number = 2;
+        await _hamster.GetRandomHamsters(number);
+    }
+
+    async Task UpdatePoints(int winnerId)
+    {
+        battleDone = true;
+        int gameId = await _battle.AddGame();
+
+        for (var i = 0; i < gameId; i++)
+        {
+            var loser = _hamster.Hamsters.FirstOrDefault(h => h.Id != winnerId);
+            var request1 = new HamsterGame
+                {
+
+                    GameId = gameId,
+                    HamsterId = loser.Id,
+                    WinStatus = "Loser"
+
+                };
+
+            await _hamster.UpdateHamster(request1, loser.Id);
+            await _battle.AddFighterAndGame(request1);
+
+            var request2 = new HamsterGame
+                {
+                    GameId = gameId,
+                    HamsterId = winnerId,
+                    WinStatus = "Winner"
+                };
+
+            battleDone = true;
+
+            await _hamster.UpdateHamster(request2, winnerId);
+            await _battle.AddFighterAndGame(request2);
+
+            _nav.NavigateTo($"/battle/{gameId}", true);
+
+        }
+
+
+
+
+    }
+}

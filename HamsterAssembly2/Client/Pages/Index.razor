@@ -1,0 +1,34 @@
+﻿@page "/"
+@using HamsterAssembly2.Client.Pages
+@inject NavigationManager NavigationManager
+
+<PageTitle>Hamster Wars!</PageTitle>
+
+<h1>Welcome to Hamster War! </h1>
+
+
+<h6> Here you can vote on which hamster you think is the sweetest. The hamster with the most votes wins.</h6>
+
+<h6> Do you want to compete?  click on the link "Battle" Which you can find to the left of you on the homepage of the menubelow.</h6>
+
+Or you can click on the button here. <button class="btn btn-outline-success" @onclick="Battle"> Battle </button>
+
+
+<hr> 
+
+<img src="/Content/Images/Hamster- Framsida.jpg" width="700px" />
+
+
+<h2></h2>
+
+
+@code {
+
+    void Battle()
+    {
+        NavigationManager.NavigateTo("/battle");
+    }
+
+
+
+}

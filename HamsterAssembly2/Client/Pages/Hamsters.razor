@@ -1,0 +1,73 @@
+﻿@page "/hamsters"
+@page "/hamsters/{id:int}"
+@using HamsterAssembly2.Client.Services.HamsterService
+@using HamsterAssembly2.Shared.Models
+@using HamsterAssembly2.Client.Services
+@inject IHamsterService HamsterService
+@inject NavigationManager _nav
+
+<PageTitle>Hamsters</PageTitle>
+
+<h3>Hamster</h3>
+
+<button class="btn btn-primary" @onclick="AddHamster">Add hamster</button>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th></th>
+            <th scope="col"></th>
+            <th scope="col">Name</th>
+            <th scope="col">Age</th>
+            <th scope="col">Favorite Food</th>
+            <th scope="col">Loves</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var hamster in HamsterService.Hamsters)
+        {
+        <td>@hamster.Id</td>
+        <img src="@hamster.ImgName" alt="@hamster.Id" class="ImagePhoto">
+        <tr>
+            <th scope="col"></th>
+
+            <th></th>
+            <td>@hamster.Name</td>
+            <td>@hamster.Age</td>
+            <td>@hamster.FavFood</td>
+            <td>@hamster.Loves</td>
+
+
+            <button type="submit" class="btn btn-primary" @onclick="(() => ShowHamster(hamster.Id))"> <i class="oi oi-pencil"></i>  </button>
+        </tr>
+
+        }
+    </tbody>
+</table>
+
+
+@code {
+    [Parameter]
+
+    public int Id { get; set; }
+
+    private List<Hamster> Hamster = new List<Hamster>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await HamsterService.GetHamsters();
+    }
+
+    void ShowHamster(int id)
+    {
+        _nav.NavigateTo($"/hamster/{id}");
+    }
+
+    void AddHamster()
+    {
+        _nav.NavigateTo("/hamster");
+    }
+
+}
+

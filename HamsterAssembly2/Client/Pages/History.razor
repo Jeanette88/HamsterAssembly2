@@ -1,0 +1,51 @@
+﻿@page "/history"
+@using HamsterAssembly2.Client.Services.HamsterService
+@using HamsterAssembly2.Shared.Models
+@inject IHamsterService _hamster
+@inject NavigationManager _nav
+
+
+<PageTitle>Battle history</PageTitle>
+
+
+<h3>History</h3>
+
+
+
+
+<table class="table oi-tablet">
+    <thead>
+        <tr>
+            <th scope="col">Hamsters</th>
+            <th scope="col">Wins</th>
+            <th scope="col">Losses</th>
+            <th scope="col">Games</th>
+            <th scope="col">Wins result in % </th>
+        </tr>
+    </thead>
+    <tbody>
+
+        @foreach (var battle in _hamster.Hamsters)
+        {
+            <tr>
+                <th scope="row">@battle.Name</th>
+                <th class="Wins">@battle.Wins</th>
+                <th class="Losses">@battle.Losses</th>
+                <th class="Games">@battle.Games</th>
+                <th class="row">@battle.Wins,@battle.Games %</th>
+            </tr>
+        }
+
+
+    </tbody>
+</table>
+
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        await _hamster.GetHamsters();
+    }
+
+}

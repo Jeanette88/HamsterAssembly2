@@ -1,0 +1,133 @@
+﻿@page "/hamster"
+@page "/hamster/{id:int}"
+@using HamsterAssembly2.Client.Services
+@using HamsterAssembly2.Client.Services.HamsterService
+@using HamsterAssembly2.Shared.Models
+@inject HttpClient _http
+@inject IHamsterService _hamster
+@inject NavigationManager _nav
+
+<PageTitle>Hamsteria</PageTitle>
+
+@if (Id == null)
+{
+    <h3>Create a new Hamster</h3>
+}
+else
+{
+    <h3>Edite @hamster.Name</h3>
+}
+
+<EditForm Model="@hamster" OnValidSubmit="@HandleSubmit">
+    <DataAnnotationsValidator />
+    <div>
+        <label for="name">Name</label>
+        <InputText id="name" @bind-Value="hamster.Name" class="form-control" style="width: 500px"></InputText>
+        <ValidationMessage For="@(()=> hamster.Name)" />
+    </div>
+    <div>
+        <label for="age">Age</label>
+        <InputNumber id="age" @bind-Value="hamster.Age" class="form-control" style="width: 500px"></InputNumber>
+        <ValidationMessage For="@(()=> hamster.Age)" />
+    </div>
+    <div>
+        <label for="fav-food">Favourite food</label>
+        <InputText id="fav-food" @bind-Value="hamster.FavFood" class="form-control" style="width: 500px"></InputText>
+        <ValidationMessage For="@(()=> hamster.FavFood)" />
+    </div>
+    <div>
+        <label for="fav-thing">Favourite thing</label>
+        <InputText id="fav-thing" @bind-Value="hamster.Loves" class="form-control" style="width: 500px"></InputText>
+        <ValidationMessage For="@(()=> hamster.Loves)" />
+    </div>
+    <br />
+    <div>
+        <label for="image">Image</label>
+          <InputFile OnChange="@LoadFile" @bind-Value="hamster.ImgName" accept=".png,.jpg,.jpeg"></InputFile>
+          <ValidationMessage For="@(()=> hamster.ImgName)" />
+    </div>
+    <p class="loser">@errorMessage</p>
+    <button type="submit" class="btn btn-primary">Save hamster</button>
+     @if (Id != null)
+    {
+        <button type="button" class="btn btn-danger" @onclick="DeleteHamster">Delete hamster</button>
+    }
+</EditForm>
+
+@code {
+    [Parameter]
+    public int? Id { get; set; }
+
+    Hamster hamster = new Hamster();
+
+    private long maxFileSize = 1024 * 490;
+    IBrowserFile selectedFile;
+    private string? fullFileName;
+    private string errorMessage = string.Empty;
+
+
+    private void LoadFile(InputFileChangeEventArgs e)
+    {
+        selectedFile = e.File;
+        string fileName = e.File.Name;
+        string fileExtension = fileName.Split(".").Last();
+        string dbFileName = string.Format(@"{0}", Guid.NewGuid());
+        fullFileName = dbFileName + "." + fileExtension;
+        string dbPath = $"/images/{fullFileName}";
+        hamster.ImgName = dbPath;
+
+    }
+
+    bool CheckValidTypes()
+    {
+        string[] vaildTypes = { "png", "jpg", "jpeg" };
+        string fileExtension = selectedFile.Name.Split('.').Last();
+        return vaildTypes.Contains(fileExtension.ToLower());
+
+    }
+
+    private async Task SaveFile()
+    {
+        using (var ms = new MemoryStream())
+        {
+            await selectedFile.OpenReadStream().CopyToAsync(ms);
+            UploadedFile uploadedFile = new UploadedFile();
+            uploadedFile.FileName = fullFileName;
+            uploadedFile.FileContent = ms.ToArray();     
+
+            var result = await _http.PostAsJsonAsync<UploadedFile>("api/fileupload", uploadedFile);
+            if (!result.IsSuccessStatusCode) return;        
+        }
+        
+        await _hamster.AddHamster(hamster);
+    }
+
+    async Task HandleSubmit()
+    {
+        if (!CheckValidTypes())
+        {
+            errorMessage = "The file type is not allowed.";
+            return;
+        }
+
+        if (selectedFile.Size > maxFileSize)
+        {
+            errorMessage = "The file is too large.";
+            return;
+        }
+        if (selectedFile != null)
+        {
+           await SaveFile();
+            
+           _nav.NavigateTo("hamster");
+        }         
+        
+    }
+
+    async Task DeleteHamster()
+    {
+        await _hamster.DeleteHamster(hamster.Id);
+        _nav.NavigateTo("hamsters");
+    }
+
+}
